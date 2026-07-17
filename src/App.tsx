@@ -3,6 +3,7 @@ import { Editor } from './engine/editor'
 import type { RGB, Tool } from './engine/types'
 import { EditorCanvas, type Backdrop, type ViewController } from './components/EditorCanvas'
 import {
+  IconCoffee,
   IconDownload,
   IconEraser,
   IconFit,
@@ -438,6 +439,13 @@ export default function App() {
               {keepColors.length === 0 && <p className="hint">Optional: protect subject colors with “Pick +”.</p>}
             </div>
           </div>
+
+          <footer className="panel-footer">
+            <a href="https://ko-fi.com/Yummieee" target="_blank" rel="noopener noreferrer">
+              <IconCoffee size={16} />
+              Support me on Ko-fi
+            </a>
+          </footer>
         </aside>
 
         <div className="viewport">

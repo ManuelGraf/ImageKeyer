@@ -301,6 +301,28 @@ body {
   color: var(--text-dim);
 }
 
+/* ---------- Panel footer ---------- */
+
+.panel-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.panel-footer a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 12px;
+}
+
+.panel-footer a:hover {
+  color: var(--accent);
+}
+
 /* ---------- Empty state ---------- */
 
 .empty {
@@ -405,6 +427,11 @@ body {
   .palette {
     flex: 1;
     min-width: 45%;
+  }
+
+  .panel-footer {
+    width: 100%;
+    margin-top: 0;
   }
 
   .btn-text {

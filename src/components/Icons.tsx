@@ -100,6 +100,14 @@ export const IconPan = (p: IconProps) => (
   </Svg>
 )
 
+export const IconCoffee = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M4 8h12v7a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z" />
+    <path d="M16 9h2a2.5 2.5 0 0 1 0 5h-2" />
+    <path d="M7 4.5c0 .8.8.8.8 1.5M11 4.5c0 .8.8.8.8 1.5" />
+  </Svg>
+)
+
 export const IconPickDrop = (p: IconProps) => (
   <Svg {...p}>
     <path d="M14.5 4.5a2.5 2.5 0 0 1 3.5 3.5l-7.5 7.5-4.2 1.2 1.2-4.2z" />
