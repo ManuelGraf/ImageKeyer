@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import type { Editor } from '../engine/editor'
-import type { BrushSettings, RGB, Tool } from '../engine/types'
+import type { BrushSettings, Picker, RGB, Tool } from '../engine/types'
 
 export type Backdrop = 'checker' | 'white' | 'black'
 
@@ -12,9 +12,11 @@ export interface ViewController {
 interface Props {
   editor: Editor
   tool: Tool
+  picker: Picker
   brush: BrushSettings
   backdrop: Backdrop
   onPick: (kind: 'drop' | 'keep', color: RGB) => void
+  onZoomChange?: (scale: number) => void
   controllerRef: React.MutableRefObject<ViewController | null>
 }
 
@@ -41,14 +43,14 @@ function makeCheckerPattern(ctx: CanvasRenderingContext2D): CanvasPattern | null
   return ctx.createPattern(tile, 'repeat')
 }
 
-export function EditorCanvas({ editor, tool, brush, backdrop, onPick, controllerRef }: Props) {
+export function EditorCanvas({ editor, tool, picker, brush, backdrop, onPick, onZoomChange, controllerRef }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   // Mirror the latest props into a ref so event handlers (registered once)
   // always see current values.
-  const propsRef = useRef({ editor, tool, brush, backdrop, onPick })
-  propsRef.current = { editor, tool, brush, backdrop, onPick }
+  const propsRef = useRef({ editor, tool, picker, brush, backdrop, onPick, onZoomChange })
+  propsRef.current = { editor, tool, picker, brush, backdrop, onPick, onZoomChange }
 
   const stateRef = useRef({
     view: { scale: 1, tx: 0, ty: 0 } as View,
@@ -78,27 +80,38 @@ export function EditorCanvas({ editor, tool, brush, backdrop, onPick, controller
       const dpr = window.devicePixelRatio || 1
       const { view } = st
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-      ctx.fillStyle = '#0d0e11'
+      ctx.fillStyle = '#0b0c0d'
       ctx.fillRect(0, 0, canvas.width / dpr, canvas.height / dpr)
 
       const w = p.editor.width * view.scale
       const h = p.editor.height * view.scale
+      // Image plate: drop shadow + 1px ring, then the backdrop behind the keyed result.
+      ctx.save()
+      ctx.shadowColor = 'rgba(0,0,0,0.5)'
+      ctx.shadowBlur = 40
+      ctx.shadowOffsetY = 12
       if (p.backdrop === 'checker' && st.pattern) {
         ctx.fillStyle = st.pattern
       } else {
         ctx.fillStyle = p.backdrop === 'white' ? '#ffffff' : '#000000'
       }
       ctx.fillRect(view.tx, view.ty, w, h)
+      ctx.restore()
+      ctx.strokeStyle = '#26282b'
+      ctx.lineWidth = 1
+      ctx.strokeRect(view.tx - 0.5, view.ty - 0.5, w + 1, h + 1)
 
       ctx.setTransform(dpr * view.scale, 0, 0, dpr * view.scale, dpr * view.tx, dpr * view.ty)
       ctx.imageSmoothingEnabled = view.scale < 4
       ctx.imageSmoothingQuality = 'high'
       ctx.drawImage(p.editor.result, 0, 0)
 
+      p.onZoomChange?.(view.scale)
+
       // Brush cursor ring (screen space).
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       const brushTool = p.tool === 'brush' || p.tool === 'erase' || p.tool === 'restore'
-      if (st.cursor && brushTool && !st.spaceDown && st.mode !== 'pan' && st.mode !== 'pinch') {
+      if (st.cursor && brushTool && !p.picker && !st.spaceDown && st.mode !== 'pan' && st.mode !== 'pinch') {
         const r = p.brush.size * view.scale
         ctx.beginPath()
         ctx.arc(st.cursor.x, st.cursor.y, r, 0, Math.PI * 2)
@@ -202,17 +215,18 @@ export function EditorCanvas({ editor, tool, brush, backdrop, onPick, controller
       }
       if (st.pointers.size > 2) return
 
-      const wantsPan = p.tool === 'pan' || st.spaceDown || e.button === 1
+      const wantsPan = (p.tool === 'pan' && !p.picker) || st.spaceDown || e.button === 1
       if (wantsPan) {
         st.mode = 'pan'
         st.lastScreen = pt
         schedule()
         return
       }
-      if (p.tool === 'pick-drop' || p.tool === 'pick-keep') {
+      // An armed pipette samples on click and overrides the active tool.
+      if (p.picker) {
         const img = toImage(pt)
         const color = p.editor.pickColor(img.x, img.y)
-        if (color) p.onPick(p.tool === 'pick-drop' ? 'drop' : 'keep', color)
+        if (color) p.onPick(p.picker, color)
         return
       }
       if (e.button !== 0 && e.pointerType === 'mouse') return
@@ -313,8 +327,9 @@ export function EditorCanvas({ editor, tool, brush, backdrop, onPick, controller
 
     const updateCursorStyle = () => {
       const p = propsRef.current
-      if (st.spaceDown || p.tool === 'pan') canvas.style.cursor = 'grab'
-      else if (p.tool === 'pick-drop' || p.tool === 'pick-keep') canvas.style.cursor = 'crosshair'
+      if (st.spaceDown) canvas.style.cursor = 'grab'
+      else if (p.picker) canvas.style.cursor = 'crosshair'
+      else if (p.tool === 'pan') canvas.style.cursor = 'grab'
       else canvas.style.cursor = 'none'
     }
     updateCursorStyle()
@@ -361,17 +376,18 @@ export function EditorCanvas({ editor, tool, brush, backdrop, onPick, controller
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editor])
 
-  // Cursor style + repaint when tool/backdrop/brush change.
+  // Cursor style + repaint when tool/picker/backdrop/brush change.
   useEffect(() => {
     const canvas = canvasRef.current
     const st = stateRef.current
     if (!canvas) return
-    if (st.spaceDown || tool === 'pan') canvas.style.cursor = 'grab'
-    else if (tool === 'pick-drop' || tool === 'pick-keep') canvas.style.cursor = 'crosshair'
+    if (st.spaceDown) canvas.style.cursor = 'grab'
+    else if (picker) canvas.style.cursor = 'crosshair'
+    else if (tool === 'pan') canvas.style.cursor = 'grab'
     else canvas.style.cursor = 'none'
     // Trigger a repaint via the editor's dirty hook (rAF-throttled inside).
     editor.onDirty?.()
-  }, [tool, backdrop, brush, editor])
+  }, [tool, picker, backdrop, brush, editor])
 
   return (
     <div ref={containerRef} className="canvas-container">

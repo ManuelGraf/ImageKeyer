@@ -13,7 +13,10 @@ export interface KeyParams {
   tolerance: number
 }
 
-export type Tool = 'brush' | 'erase' | 'restore' | 'pan' | 'pick-drop' | 'pick-keep'
+export type Tool = 'brush' | 'erase' | 'restore' | 'pan'
+
+/** Armed eyedropper state — a modal overlay on top of the active tool, not a tool itself. */
+export type Picker = 'drop' | 'keep' | null
 
 export type BrushMode = 'brush' | 'erase' | 'restore'
 

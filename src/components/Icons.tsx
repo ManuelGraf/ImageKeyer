@@ -47,15 +47,6 @@ export const IconRedo = (p: IconProps) => (
   </Svg>
 )
 
-export const IconFit = (p: IconProps) => (
-  <Svg {...p}>
-    <path d="M4 9V4h5" />
-    <path d="M15 4h5v5" />
-    <path d="M20 15v5h-5" />
-    <path d="M9 20H4v-5" />
-  </Svg>
-)
-
 export const IconDownload = (p: IconProps) => (
   <Svg {...p}>
     <path d="M12 3v12" />
@@ -100,11 +91,17 @@ export const IconPan = (p: IconProps) => (
   </Svg>
 )
 
-export const IconCoffee = (p: IconProps) => (
+export const IconHelp = (p: IconProps) => (
   <Svg {...p}>
-    <path d="M4 8h12v7a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z" />
-    <path d="M16 9h2a2.5 2.5 0 0 1 0 5h-2" />
-    <path d="M7 4.5c0 .8.8.8.8 1.5M11 4.5c0 .8.8.8.8 1.5" />
+    <circle cx="12" cy="12" r="9" />
+    <path d="M9.5 9a2.5 2.5 0 0 1 4.9 0.7c0 1.6-2.4 2.1-2.4 3.3" />
+    <path d="M12 17h.01" />
+  </Svg>
+)
+
+export const IconHeart = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.51 4.04 3 5.5l7 7Z" />
   </Svg>
 )
 
@@ -112,7 +109,6 @@ export const IconPickDrop = (p: IconProps) => (
   <Svg {...p}>
     <path d="M14.5 4.5a2.5 2.5 0 0 1 3.5 3.5l-7.5 7.5-4.2 1.2 1.2-4.2z" />
     <path d="m13 6 4.5 4.5" />
-    <path d="M3 21h6" strokeWidth="2.2" />
   </Svg>
 )
 
